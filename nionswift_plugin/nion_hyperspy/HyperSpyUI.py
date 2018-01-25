@@ -21,7 +21,7 @@ from hyperspy import components1d
 from hyperspy.signals import Signal1D
 import nion.hyperspy
 import numpy as np
-backgrounds = [components1d.PowerLaw, components1d.Polynomial, components1d.Gaussian, components1d.Offset]
+backgrounds = [components1d.PowerLaw, components1d.Polynomial, components1d.Gaussian, components1d.Offset, components1d.Voigt]
 signal = nion.hyperspy.xdata_to_signal(src.display_xdata)
 calibration = src.display_xdata.dimensional_calibrations[0]
 fit_px = calibration.convert_to_calibrated_value(int(fit_region.interval[0] * src.display_xdata.data_shape[0])), calibration.convert_to_calibrated_value(int(fit_region.interval[1] * src.display_xdata.data_shape[0]))
@@ -30,15 +30,19 @@ model = Model1D(signal)
 background_estimator = backgrounds[background]()
 model.append(background_estimator)
 background_estimator.estimate_parameters(signal, fit_px[0], fit_px[1])
+model_signal = model.as_signal()
 oldax = signal.axes_manager.as_dictionary()
 newax = oldax['axis-0'].copy()
 newax['navigate'] = True
 newax['size'] = 3
-axes=[newax, oldax['axis-0']]
-model_signal = model.as_signal()
-result = (signal.data, model_signal.data, (signal - model_signal).data)
+if show_all:
+    axes=[newax, oldax['axis-0']]
+    result = (signal.data, model_signal.data, (signal - model_signal).data)
+else:
+    axes=[oldax['axis-0']]
+    result = (signal - model_signal).data
 result_signal = Signal1D(np.array(result), axes=axes)
-target.xdata = nion.hyperspy.signal_to_xdata(result_signal)[:, signal_px[0]:signal_px[1]]
+target.xdata = nion.hyperspy.signal_to_xdata(result_signal)[..., signal_px[0]:signal_px[1]]
 ''',
           'sources': [{'label': 'Source', 'name': 'src',
                        'requirements': [{"type": "dimensionality", "min": 1, "max": 1}],
@@ -49,7 +53,10 @@ target.xdata = nion.hyperspy.signal_to_xdata(result_signal)[:, signal_px[0]:sign
                             'type': 'interval'},
                        ]}],
           'title': 'Background Removed (HS)',
-          'parameters': [{"name": "background", "label": _("Background"), "type": "integral", "value": 0, "value_default": 0, "value_min": 0, "value_max": 3, "control_type": "slider"}]
+          'parameters': [
+                         {'name': 'background', 'label': _('Background'), 'type': 'integral', 'value': 0, 'value_default': 0, 'value_min': 0, 'value_max': 4, 'control_type': 'slider'},
+                         {'name': 'show_all', 'label':  _('Show all data'), 'type': 'boolean', 'value': True, 'value_default': True}
+                         ]
         },
     "nion.hyperspy.map":
         { 'script': '''# map background subtracted signal with HyperSpy
