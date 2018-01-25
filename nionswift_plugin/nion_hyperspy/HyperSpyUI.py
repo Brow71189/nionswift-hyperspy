@@ -21,13 +21,13 @@ from hyperspy import components1d
 from hyperspy.signals import Signal1D
 import nion.hyperspy
 import numpy as np
-backgrounds = {0: components1D.PowerLaw, 1: components1D.Exponential, 2: components1D.Polynomial, 3: components1D.Gaussian, 4: components1D.Offset}
+backgrounds = [components1d.PowerLaw, components1d.Polynomial, components1d.Gaussian, components1d.Offset]
 signal = nion.hyperspy.xdata_to_signal(src.display_xdata)
 calibration = src.display_xdata.dimensional_calibrations[0]
 fit_px = calibration.convert_to_calibrated_value(int(fit_region.interval[0] * src.display_xdata.data_shape[0])), calibration.convert_to_calibrated_value(int(fit_region.interval[1] * src.display_xdata.data_shape[0]))
 signal_px = int(signal_region.interval[0] * src.display_xdata.data_shape[0]), int(signal_region.interval[1] * src.display_xdata.data_shape[0])
 model = Model1D(signal)
-background_estimator = backgrounds[background]
+background_estimator = backgrounds[background]()
 model.append(background_estimator)
 background_estimator.estimate_parameters(signal, fit_px[0], fit_px[1])
 oldax = signal.axes_manager.as_dictionary()
@@ -49,7 +49,7 @@ target.xdata = nion.hyperspy.signal_to_xdata(result_signal)[:, signal_px[0]:sign
                             'type': 'interval'},
                        ]}],
           'title': 'Background Removed (HS)',
-          'parameters': [{"name": "background", "label": _("Background"), "type": "integral", "value": 0, "value_default": 0, "value_min": 0, "value_max": 2, "control_type": "slider"}]
+          'parameters': [{"name": "background", "label": _("Background"), "type": "integral", "value": 0, "value_default": 0, "value_min": 0, "value_max": 3, "control_type": "slider"}]
         },
     "nion.hyperspy.map":
         { 'script': '''# map background subtracted signal with HyperSpy
