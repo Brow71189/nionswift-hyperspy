@@ -24,12 +24,12 @@ import numpy as np
 
 signal = nion.hyperspy.xdata_to_signal(src.display_xdata)
 calibration = src.display_xdata.dimensional_calibrations[0]
-fit_px = calibration.convert_to_calibrated_value(int(fit_region.interval[0] * src.display_xdata.data_shape[0])), calibration.convert_to_calibrated_value(int(fit_region.interval[1] * src.display_xdata.data_shape[0]))
+fit_range = calibration.convert_to_calibrated_value(int(fit_region.interval[0] * src.display_xdata.data_shape[0])), calibration.convert_to_calibrated_value(int(fit_region.interval[1] * src.display_xdata.data_shape[0]))
 signal_px = int(signal_region.interval[0] * src.display_xdata.data_shape[0]), int(signal_region.interval[1] * src.display_xdata.data_shape[0])
 model = Model1D(signal)
 background_estimator = components1d.PowerLaw()
 model.append(background_estimator)
-background_estimator.estimate_parameters(signal, fit_px[0], fit_px[1])
+background_estimator.estimate_parameters(signal, fit_range[0], fit_range[1])
 oldax = signal.axes_manager.as_dictionary()
 newax = oldax['axis-0'].copy()
 newax['navigate'] = True
@@ -56,10 +56,11 @@ target.xdata = nion.hyperspy.signal_to_xdata(result_signal)[:, signal_px[0]:sign
 import hyperspy.api as hyperspy
 import nion.hyperspy
 
-fit_px = int(fit_region.interval[0] * src_fit.display_xdata.data_shape[0]), int(fit_region.interval[1] * src_fit.display_xdata.data_shape[0])
+calibration = src.display_xdata.dimensional_calibrations[0]
+fit_range = calibration.convert_to_calibrated_value(int(fit_region.interval[0] * src.display_xdata.data_shape[0])), calibration.convert_to_calibrated_value(int(fit_region.interval[1] * src.display_xdata.data_shape[0]))
 signal_px = int(signal_region.interval[0] * src_fit.display_xdata.data_shape[0]), int(signal_region.interval[1] * src_fit.display_xdata.data_shape[0])
 signal = nion.hyperspy.xdata_to_signal(src.xdata)
-signal = signal.remove_background(signal_range=fit_px).isig[signal_px[0]:signal_px[1]].integrate1D(2)
+signal = signal.remove_background(signal_range=fit_range).isig[signal_px[0]:signal_px[1]].integrate1D(2)
 target.xdata = nion.hyperspy.signal_to_xdata(signal)
 ''',
           'sources': [{'label': 'Fitting Source', 'name': 'src_fit',
